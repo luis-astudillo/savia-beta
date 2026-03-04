@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savia - App Integral</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <!-- Librerías para exportación -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- Intro.js para Guía Interactiva -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/introjs.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/intro.js@7.2.0/intro.min.js"></script>
+</head>
+
+<body>
+    <div id="notification-container"></div>
+
+    <!-- Modal de Importación -->
+    <div id="modal-import" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <h3 class="module-title" style="font-size:1.5rem; margin-bottom:1rem;">Onboarding de Datos</h3>
+            <p class="form-helper-text" style="margin-bottom:1rem;">Carga un archivo Excel o CSV con las columnas:
+                <strong>Nombre, Unidad, Costo, Stock</strong>.</p>
+
+            <div class="form-group">
+                <button class="btn btn-small" onclick="app.descargarPlantillaImport()"
+                    style="background:#eee; color:#333; margin-bottom:10px;">📥 Descargar Plantilla Ejemplo</button>
+                <input type="file" id="import-file-input" accept=".xlsx, .xls, .csv"
+                    style="display:block; width:100%; padding:10px; border:1px dashed var(--savia-deep-violet); border-radius:8px;">
+            </div>
+
+            <div id="import-preview-container"
+                style="display:none; margin-top:1.5rem; border-top:1px solid #eee; pt-1rem;">
+                <h4 style="font-size:0.9rem; color:var(--savia-deep-violet); margin-bottom:0.5rem;">Vista Previa de
+                    Datos</h4>
+                <div class="table-container" style="max-height:200px; overflow-y:auto; font-size:0.8rem;">
+                    <table style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Unidad</th>
+                                <th>Costo</th>
+                                <th>Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody id="import-preview-body"></tbody>
+                    </table>
+                </div>
+                <p id="import-preview-summary" style="font-size:0.8rem; margin:10px 0; font-weight:600;"></p>
+                <button class="btn btn-primary btn-full" onclick="app.confirmarImportacionExcel()">Confirmar e Importar
+                    Todo</button>
+            </div>
+
+            <div class="form-row-2col" style="margin-top:1.5rem;">
+                <button class="btn btn-primary" id="btn-procesar-archivo" onclick="app.procesarArchivoImport()">Leer
+                    Archivo</button>
+                <button class="btn" onclick="app.closeImportModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CABECERA MÓVIL (Solo visible en pantallas pequeñas) -->
+    <header class="mobile-header">
+        <div class="logo-mobile">Savia</div>
+        <button class="menu-toggle" id="menu-toggle" onclick="app.toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </header>
+
+    <!-- NAVEGACIÓN LATERAL -->
+    <nav class="sidebar" id="sidebar">
+        <h1>Savia</h1>
+        <ul class="nav-links">
+            <li><a onclick="app.showModule('dashboard')" id="nav-dashboard" class="active">📊 Dashboard</a></li>
+            <li><a onclick="app.showModule('recetas')" id="nav-recetas">📔 Recetas & Productos</a></li>
+            <li><a onclick="app.showModule('produccion')" id="nav-produccion">🌿 Laboratorio (Producción)</a></li>
+            <li><a onclick="app.showModule('compras')" id="nav-compras">🛒 Facturación (Compras)</a></li>
+            <li><a onclick="app.showModule('ventas')" id="nav-ventas">💰 Ventas & Stock</a></li>
+            <li><a onclick="app.showModule('reportes')" id="nav-reportes">📄 Reportes</a></li>
+            <li><a onclick="app.showModule('caja')" id="nav-caja">🏦 Caja & Finanzas</a></li>
+            <li><a onclick="app.showModule('config')" id="nav-config">⚙️ Parámetros</a></li>
+            <li style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                <a onclick="app.startGuide()" style="opacity: 0.8; font-size: 0.8rem;">💡 Guía de Inicio</a>
+            </li>
+        </ul>
+        <div style="margin-top: auto; font-size: 0.1rem; opacity: 0.6; text-align: center;">
+            Savia v3.1 - Argentina
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="content">
+
+        <!-- MÓDULO 1: DASHBOARD -->
+        <section id="module-dashboard" class="module active">
+            <h2 class="module-title">Dashboard</h2>
+            <!-- Filtros y KPIs de Crecimiento -->
+            <div class="dashboard-filters">
+                <div>
+                    <label class="inline-label">Filtro Estacional:</label>
+                    <select id="dash-filtro-temporada" onchange="app.updateDashboardCharts()" class="filter-select">
+                        <option value="Todas">Todas</option>
+                        <option value="Invierno">Invierno</option>
+                        <option value="Verano">Verano</option>
+                    </select>
+                </div>
+                <div class="kpi-container">
+                    <div class="kpi-item">
+                        <div class="stat-label">Crecimiento Ventas (mes)</div>
+                        <div id="stat-crecimiento-ventas" class="kpi-value">0%</div>
+                    </div>
+                    <div class="kpi-item">
+                        <div class="stat-label">Eficiencia Stock</div>
+                        <div id="stat-eficiencia" class="kpi-value">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <div class="stat-label">Valor Activos</div>
+                    <div id="stat-valor" class="stat-value">$0.00</div>
+                </div>
+                <div class="card">
+                    <div class="stat-label">Balance Neto</div>
+                    <div id="stat-ingresos" class="stat-value">$0.00</div>
+                </div>
+                <div class="card card-highlight" id="card-dias-stock">
+                    <div class="stat-label">Stock de Insumos Para</div>
+                    <div id="stat-dias-stock" class="stat-value stat-value-large">0 Días</div>
+                </div>
+            </div>
+
+            <!-- Gráficos Principales -->
+            <div class="grid grid-dashboard">
+                <div class="card card-fluid">
+                    <h3>Evolución de Ventas Mensuales</h3>
+                    <div id="salesAreaChart" class="chart-container-fixed"></div>
+                </div>
+                <div class="card card-centered">
+                    <h3>Nivel de Stock (Top 5 Insumos)</h3>
+                    <div id="stockRadialChart" class="chart-container-centered"></div>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="card card-scroll">
+                    <h3>Rentabilidad por Producto (Precio vs Costo Insumos)</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Precio Venta</th>
+                                    <th>Costo Promedio Insumos</th>
+                                    <th>Margen Neto (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profitabilityTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 2: RECETAS -->
+        <section id="module-recetas" class="module">
+            <h2 class="module-title">Recetas & Productos</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3 id="recipe-form-title">Definir Nueva Receta</h3>
+                    <input type="hidden" id="edit-prod-id">
+                    <div class="form-group"><label>Nombre Producto</label><input type="text" id="new-prod-nombre"
+                            required></div>
+                    <div class="form-row-2col">
+                        <div class="form-group"><label>Margen (%)</label><input type="number" id="new-prod-margen"
+                                value="100" min="0"></div>
+                        <div class="form-group"><label>Temporada</label>
+                            <select id="new-prod-temporada">
+                                <option value="Todas">Todas</option>
+                                <option value="Invierno">Invierno</option>
+                                <option value="Verano">Verano</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="formula-box">
+                        <label>Ingredientes & Packaging:</label>
+                        <p class="form-helper-text">(Asegúrate de incluir envases y
+                            etiquetas como insumos)</p>
+                        <div id="formula-items"></div>
+                        <button class="btn btn-small" onclick="app.addFormulaItem()">+ Agregar
+                            Componente</button>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="app.crearProducto()" id="btn-save-recipe">Guardar
+                        Receta</button>
+                    <button class="btn btn-cancel" onclick="app.cancelarEdicionReceta()" id="btn-cancel-recipe">Cancelar
+                        Edición</button>
+                    <div id="prod-create-log"></div>
+                </div>
+                <div class="card">
+                    <h3>Catálogo</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Últ. Lote</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productos-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 3: PRODUCCIÓN -->
+        <section id="module-produccion" class="module">
+            <h2 class="module-title">Laboratorio</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Fabricar Lote</h3>
+                    <div class="form-group"><label>Receta</label><select id="prod-select"></select></div>
+                    <div class="form-row-2col">
+                        <div class="form-group"><label>Nro de Lote</label><input type="text" id="prod-lote"
+                                placeholder="Ej: L24-001"></div>
+                        <div class="form-group"><label>Cantidad</label><input type="number" id="prod-qty" value="1"
+                                min="0" required>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="app.registrarProduccion()">Producir</button>
+                    <div id="prod-log"></div>
+                </div>
+                <div class="card">
+                    <h3>Estado Materias Primas</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Insumo</th>
+                                    <th>Stock</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="insumos-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 4: COMPRAS Y FACTURACIÓN (FISCAL ARG) -->
+        <section id="module-compras" class="module">
+            <h2 class="module-title">Ingreso de Facturas</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Datos del Comprobante</h3>
+                    <div class="form-row-2col">
+                        <div class="form-group"><label>Tipo</label>
+                            <select id="compra-tipo-factura" onchange="app.toggleIvaField(this.value)">
+                                <option value="A">Factura A</option>
+                                <option value="B">Factura B</option>
+                                <option value="C">Factura C</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Nro Factura</label><input type="text" id="compra-nro"
+                                placeholder="0001-00001234" required></div>
+                    </div>
+                    <div class="form-row-2col">
+                        <div class="form-group"><label>Fecha</label><input type="date" id="compra-fecha"></div>
+                        <div class="form-group"><label>Proveedor</label><input type="text" id="compra-proveedor"></div>
+                    </div>
+
+                    <h4 class="section-subtitle">Detalle Insumo</h4>
+                    <div class="form-group">
+                        <select id="compra-insumo-select" onchange="app.toggleNuevoInsumo(this.value)">
+                            <option value="new">-- CREAR NUEVO INSUMO --</option>
+                        </select>
+                    </div>
+                    <div id="new-insumo-fields" class="insumo-fields-box">
+                        <div class="form-group"><input type="text" id="new-insumo-nombre" placeholder="Nombre Insumo">
+                        </div>
+                        <div class="form-group">
+                            <select id="new-insumo-unidad">
+                                <option value="" disabled selected>Unidad de Medida</option>
+                                <option value="g">Gramos (g)</option>
+                                <option value="kg">Kilogramos (kg)</option>
+                                <option value="ml">Mililitros (ml)</option>
+                                <option value="L">Litros (L)</option>
+                                <option value="un">Unidades (un)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row-3col">
+                        <div class="form-group">
+                            <label>Cantidad <span id="compra-unit-label" class="label-unit">(un)</span></label>
+                            <input type="number" id="compra-qty" oninput="app.calcImpuestosCompra()" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Precio Unit. ($)</label>
+                            <input type="number" id="compra-precio-unit" oninput="app.calcImpuestosCompra()" min="0"
+                                step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Neto Gravado ($)</label>
+                            <input type="number" id="compra-neto" oninput="app.calcManualNeto()" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-row-3col">
+                        <div class="form-group"><label>IVA (21%)</label><input type="number" id="compra-iva"
+                                class="input-readonly" oninput="app.calcTotalFromTaxes()" min="0" step="0.01">
+                        </div>
+                        <div class="form-group"><label>Percepciones ($)</label><input type="number"
+                                id="compra-percepcion" value="0" oninput="app.calcTotalFromTaxes()" min="0" step="0.01">
+                        </div>
+                        <div class="form-group"><label>Total Factura ($)</label><input type="number" id="compra-total"
+                                oninput="app.calcNetoCompra()" min="0" step="0.01"></div>
+                    </div>
+
+                    <button class="btn btn-primary btn-full" onclick="app.registrarCompra()">Cargar
+                        Factura</button>
+                    <div id="compra-log" class="log-container"></div>
+                </div>
+                <div class="card">
+                    <h3>Insumos & Costos Netos</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Insumo</th>
+                                    <th>Stock</th>
+                                    <th>Costo Neto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="insumos-compras-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 5: VENTAS -->
+        <section id="module-ventas" class="module">
+            <h2 class="module-title">Punto de Venta</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Datos de Venta</h3>
+                    <div class="form-group"><label>Cliente</label><input type="text" id="venta-cliente"
+                            placeholder="Nombre Cliente"></div>
+                    <div class="form-row-2col">
+                        <div class="form-group"><label>Pago</label>
+                            <select id="venta-pago" onchange="app.uiToggleCuotas(this.value); app.calcTotalVenta();">
+                                <option>Efectivo</option>
+                                <option>Transferencia</option>
+                                <option>Mercado Pago</option>
+                                <option>Tarjeta de Crédito</option>
+                                <option>Tarjeta de Débito</option>
+                            </select>
+                        </div>
+                        <div id="pago-cuotas-div" class="form-group" style="display:none;"><label>Financiación</label>
+                            <select id="venta-cuotas" onchange="app.calcTotalVenta()">
+                                <option value="1">1 Cuota (Sin Interés)</option>
+                                <option value="3">3 Cuotas</option>
+                                <option value="6">6 Cuotas</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Comprobante</label><input type="text" id="venta-comprobante"
+                                placeholder="001-001"></div>
+                    </div>
+                    <div class="form-group"><label>Producto</label><select id="venta-select"
+                            onchange="app.calcTotalVenta()"></select></div>
+
+                    <div class="form-row-2col">
+                        <div class="form-group"><label>Cantidad</label><input type="number" id="venta-qty" value="1"
+                                oninput="app.calcTotalVenta()" min="0"></div>
+                        <div class="form-group"><label>Desc. % </label><input type="number" id="venta-descuento"
+                                value="0" min="0" max="15" oninput="app.calcTotalVenta()"></div>
+                    </div>
+
+                    <div id="venta-preview" class="venta-preview-box">
+                        <div class="summary-row">
+                            <span>Subtotal:</span><span id="venta-subtotal">$0.00</span>
+                        </div>
+                        <div class="summary-row-alt">
+                            <span>Bonificación:</span><span id="venta-bonif">-$0.00</span>
+                        </div>
+                        <div class="summary-row-accent">
+                            <span>Recargo Financiero:</span><span id="venta-recargo-monto">+$0.00</span>
+                        </div>
+                        <hr class="divider-soft">
+                        <div class="total-row">
+                            <span>TOTAL FINAL:</span><span id="venta-total">$0.00</span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-full" onclick="app.registrarVenta()">Registrar Venta
+                        &
+                        Emitir</button>
+                    <div id="venta-log" class="log-container"></div>
+                </div>
+                <div class="card">
+                    <h3>Stock Disponible</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Stock</th>
+                                    <th>Precio</th>
+                                    <th>Últ. Lote</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productos-ventas-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 6: REPORTES -->
+        <section id="module-reportes" class="module">
+            <h2 class="module-title">Reportes</h2>
+            <div class="grid">
+                <div class="card card-wide">
+                    <h3>Centro de Exportación Avanzada</h3>
+                    <div class="filter-bar-advanced">
+                        <div class="form-group filter-group">
+                            <label class="filter-label">Desde
+                                (Fecha y Hora)</label>
+                            <input type="datetime-local" id="report-date-from" class="filter-input">
+                        </div>
+                        <div class="form-group filter-group">
+                            <label class="filter-label">Hasta
+                                (Fecha y Hora)</label>
+                            <input type="datetime-local" id="report-date-to" class="filter-input">
+                        </div>
+                        <button class="btn btn-small-padding"
+                            onclick="document.getElementById('report-date-from').value=''; document.getElementById('report-date-to').value='';">Limpiar
+                            Filtros</button>
+                    </div>
+                    <p class="instruction-text">Selecciona el módulo y el formato de
+                        descarga:</p>
+
+                    <div class="export-grid">
+                        <!-- Columna Productos -->
+                        <div class="export-column">
+                            <strong class="export-title">📦 PRODUCTOS</strong>
+                            <button class="btn btn-export-primary" onclick="app.exportarDoc('productos', 'xlsx')">Excel
+                                (XLSX)</button>
+                            <button class="btn btn-export-secondary"
+                                onclick="app.exportarDoc('productos', 'pdf')">PDF</button>
+                        </div>
+                        <!-- Columna Insumos -->
+                        <div class="export-column">
+                            <strong class="export-title">🧪 INSUMOS</strong>
+                            <button class="btn btn-export-primary" onclick="app.exportarDoc('insumos', 'xlsx')">Excel
+                                (XLSX)</button>
+                            <button class="btn btn-export-secondary"
+                                onclick="app.exportarDoc('insumos', 'pdf')">PDF</button>
+                        </div>
+                        <!-- Columna Compras -->
+                        <div class="export-column">
+                            <strong class="export-title">🧾 COMPRAS</strong>
+                            <button class="btn btn-export-primary" onclick="app.exportarDoc('compras', 'xlsx')">Excel
+                                (XLSX)</button>
+                            <button class="btn btn-export-secondary"
+                                onclick="app.exportarDoc('compras', 'pdf')">PDF</button>
+                        </div>
+                        <!-- Columna Ventas -->
+                        <div class="export-column">
+                            <strong class="export-title">💸 VENTAS</strong>
+                            <button class="btn btn-export-primary" onclick="app.exportarDoc('ventas', 'xlsx')">Excel
+                                (XLSX)</button>
+                            <button class="btn btn-export-secondary"
+                                onclick="app.exportarDoc('ventas', 'pdf')">PDF</button>
+                        </div>
+                        <!-- Columna Producción -->
+                        <div class="export-column">
+                            <strong class="export-title">🧪 PRODUCCIÓN</strong>
+                            <button class="btn btn-export-primary" onclick="app.exportarDoc('produccion', 'xlsx')">Excel
+                                (XLSX)</button>
+                            <button class="btn btn-export-secondary"
+                                onclick="app.exportarDoc('produccion', 'pdf')">PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="price-list-container" class="card price-list-card">
+                <h1 class="print-title">
+                    Savia</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-right">Precio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="price-list-body"></tbody>
+                </table><button class="btn btn-primary btn-print" onclick="window.print()">Imprimir</button>
+            </div>
+        </section>
+
+        <!-- MÓDULO 7: CAJA Y ARQUEO -->
+        <section id="module-caja" class="module">
+            <h2 class="module-title">Caja & Finanzas</h2>
+            <div class="grid">
+                <div class="card card-saldo">
+                    <div class="stat-label">Efectivo en Caja</div>
+                    <div id="saldo-efectivo" class="stat-value">$0.00</div>
+                </div>
+                <div class="card card-saldo">
+                    <div class="stat-label">Transferencia / Banco</div>
+                    <div id="saldo-transferencia" class="stat-value">$0.00</div>
+                </div>
+                <div class="card card-saldo">
+                    <div class="stat-label">Mercado Pago</div>
+                    <div id="saldo-mercadopago" class="stat-value">$0.00</div>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>Arqueo de Efectivo</h3>
+                    <p class="form-helper-text">Ingresa el dinero físico contado para validar contra el saldo teórico.
+                    </p>
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label>Efectivo Físico Contado ($)</label>
+                        <input type="number" id="arqueo-fisico" placeholder="0.00" step="0.01" min="0">
+                    </div>
+                    <button class="btn btn-primary btn-full" onclick="app.realizarArqueo()">Validar Arqueo</button>
+                    <div id="arqueo-log" class="log-container"></div>
+                </div>
+                <div class="card">
+                    <h3>Últimos Movimientos de Caja</h3>
+                    <div class="table-container card-scroll" style="max-height: 300px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Detalle</th>
+                                    <th>Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="caja-movimientos-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MÓDULO 8: CONFIGURACIÓN / PARÁMETROS -->
+        <section id="module-config" class="module">
+            <h2 class="module-title">Parámetros del Sistema</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Tasas Financieras %</h3>
+                    <div class="form-group"><label>Recargo Tarjeta (Base %)</label><input type="number"
+                            id="cfg-recargo-base" step="0.1" min="0"></div>
+                    <div class="form-group"><label>Interés 3 Cuotas (%)</label><input type="number"
+                            id="cfg-recargo-3cuotas" step="0.1" min="0"></div>
+                    <div class="form-group"><label>Interés 6 Cuotas (%)</label><input type="number"
+                            id="cfg-recargo-6cuotas" step="0.1" min="0"></div>
+                </div>
+                <div class="card">
+                    <h3>Reglas de Negocio</h3>
+                    <div class="form-group"><label>Descuento Máximo (%)</label><input type="number" id="cfg-desc-max"
+                            min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Método Costeo Predeterminado</label>
+                        <select id="cfg-costeo-def">
+                            <option value="PPP">Precio Promedio Ponderado</option>
+                            <option value="UC">Último Costo</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="app.saveConfig()"
+                        style="width:100%; margin-top:10px;">Guardar Parámetros</button>
+                    <button class="btn btn-small btn-full" onclick="app.openImportModal()"
+                        style="margin-top:10px; background:#f0f0f0; color:var(--savia-deep-violet);">📥 Importar Datos
+                        Iniciales</button>
+                </div>
+                <div class="card danger-zone-card">
+                    <h3 class="danger-title">Zona de Peligro</h3>
+                    <p class="danger-text">Borra todos los productos, insumos y transacciones
+                        para empezar de cero.</p>
+                    <button class="btn btn-danger-outline" onclick="app.resetSistema()">Reiniciar Sistema
+                        Completo</button>
+                </div>
+            </div>
+        </section>
+        <script src="app.js"></script>
+
+
+</body>
+
+</html>

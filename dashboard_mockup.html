@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savia - Gestión de Cosmética Natural</title>
+    <link rel="stylesheet" href="savia_styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        .container {
+            max-width: 1000px;
+            margin: -50px auto 50px auto;
+            padding: 0 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .icon-leaf {
+            width: 40px;
+            margin-bottom: 0.5rem;
+            filter: invert(1); /* To make it white in header */
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--savia-deep-violet);
+        }
+        .stat-label {
+            color: #666;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <h1>Savia</h1>
+        <div class="subtitle">COSMÉTICA NATURAL & ARTESANAL</div>
+    </div>
+</header>
+
+<div class="container">
+    <div class="grid">
+        <!-- KPI Cards -->
+        <div class="card">
+            <div class="stat-label">Valor Total Inventario</div>
+            <div class="stat-value">$12,450.00</div>
+            <p style="font-size: 0.9rem; margin-top: 10px;">↑ 12% desde el mes pasado</p>
+        </div>
+
+        <div class="card">
+            <div class="stat-label">Producción del Mes</div>
+            <div class="stat-value">450 Unidades</div>
+            <button class="btn-primary" style="margin-top: 15px;">+ Nuevo Lote</button>
+        </div>
+    </div>
+
+    <h2 style="margin-top: 3rem; color: var(--savia-deep-violet); font-family: var(--font-handwritten); font-size: 2.5rem;">Alertas de Stock</h2>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Insumo</th>
+                <th>Actual</th>
+                <th>Mínimo</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Aceite de Coco</td>
+                <td>800 ml</td>
+                <td>200 ml</td>
+                <td><span style="color: var(--savia-moss-green)">● Óptimo</span></td>
+            </tr>
+            <tr>
+                <td>Cera de Abeja</td>
+                <td>80 g</td>
+                <td>100 g</td>
+                <td><span class="badge-low-stock">Crítico</span></td>
+            </tr>
+            <tr>
+                <td>Aceite de Almendras</td>
+                <td>1.2 L</td>
+                <td>500 ml</td>
+                <td><span style="color: var(--savia-moss-green)">● Óptimo</span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

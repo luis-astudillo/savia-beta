@@ -1,0 +1,116 @@
+/* Savia Brand Identity - CSS Design System */
+
+:root {
+    /* Main Colors from Logo */
+    --savia-deep-violet: #726191; /* Background color of the logo */
+    --savia-moss-green: #9ba486;  /* Leaf/branch color from logo */
+    --savia-soft-white: #fbfaf5;  /* Organic off-white for backgrounds */
+    --savia-text-dark: #3a3247;   /* For high contrast text */
+    
+    /* Typography */
+    --font-handwritten: 'Dancing Script', cursive;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    
+    /* Spacing & Borders */
+    --radius-lg: 24px;
+    --radius-md: 12px;
+    --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+body {
+    background-color: var(--savia-soft-white);
+    color: var(--savia-text-dark);
+    font-family: var(--font-sans);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Header with Logo Background Style */
+header {
+    background-color: var(--savia-deep-violet);
+    color: white;
+    padding: 3rem 2rem;
+    text-align: center;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+}
+
+header h1 {
+    font-family: var(--font-handwritten);
+    font-size: 4rem;
+    margin: 0;
+    font-weight: 400;
+}
+
+.subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    letter-spacing: 1px;
+}
+
+/* Dashboard Cards */
+.card {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(114, 97, 145, 0.05);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* Action Buttons */
+.btn-primary {
+    background-color: var(--savia-moss-green);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary:hover {
+    background-color: #8a9474;
+    box-shadow: 0 4px 12px rgba(155, 164, 134, 0.3);
+}
+
+/* Tables & Data */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+}
+
+th {
+    text-align: left;
+    color: var(--savia-deep-violet);
+    padding: 1rem;
+    font-weight: 600;
+}
+
+td {
+    background: white;
+    padding: 1rem;
+}
+
+td:first-child { border-radius: var(--radius-md) 0 0 var(--radius-md); }
+td:last-child { border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+
+/* Alerts */
+.badge-low-stock {
+    background-color: #fce4ec;
+    color: #c2185b;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
