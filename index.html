@@ -27,7 +27,8 @@
         <div class="modal-content">
             <h3 class="module-title" style="font-size:1.5rem; margin-bottom:1rem;">Onboarding de Datos</h3>
             <p class="form-helper-text" style="margin-bottom:1rem;">Carga un archivo Excel o CSV con las columnas:
-                <strong>Nombre, Unidad, Costo, Stock</strong>.</p>
+                <strong>Nombre, Unidad, Costo, Stock</strong>.
+            </p>
 
             <div class="form-group">
                 <button class="btn btn-small" onclick="app.descargarPlantillaImport()"
@@ -68,7 +69,7 @@
 
     <!-- CABECERA MÓVIL (Solo visible en pantallas pequeñas) -->
     <header class="mobile-header">
-        <div class="logo-mobile">Savia</div>
+        <div class="logo-mobile">Savia <span class="badge-beta">BETA</span></div>
         <button class="menu-toggle" id="menu-toggle" onclick="app.toggleMenu()">
             <span></span>
             <span></span>
@@ -78,7 +79,7 @@
 
     <!-- NAVEGACIÓN LATERAL -->
     <nav class="sidebar" id="sidebar">
-        <h1>Savia</h1>
+        <h1>Savia <span class="badge-beta">BETA</span></h1>
         <ul class="nav-links">
             <li><a onclick="app.showModule('dashboard')" id="nav-dashboard" class="active">📊 Dashboard</a></li>
             <li><a onclick="app.showModule('recetas')" id="nav-recetas">📔 Recetas & Productos</a></li>
